@@ -1,3 +1,4 @@
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -10,15 +11,19 @@ public class PlayerMovement : MonoBehaviour
     public Transform groundCheckPos;
     public Vector2 groundCheckSize = new Vector2(0.5f, 0.5f);
     public LayerMask groundLayer;
+    public int maxJumps = 2;
+    private int jumpRemaining;
 
-    void Start()
-    {
-
-    }
+    [Header("Gravity")]
+    public float gravityPower = 2.0f;
+    public float maxFallSpeed = 10f;
+    public float fallSpeedMultiplier = 1.0f;
 
     void Update()
     {
         rb.linearVelocity = new Vector2(horizontalMovement * movementSpeed, rb.linearVelocityY);
+        GroundCheck();
+        Gravity();
     }
 
     public void Move(InputAction.CallbackContext context)
@@ -28,16 +33,19 @@ public class PlayerMovement : MonoBehaviour
 
     public void Jump(InputAction.CallbackContext context)
     {
-        if (isGrounded())
+        if (jumpRemaining > 0)
         {
             if (context.performed)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocityX, jumpPower);
+                jumpRemaining--;
             }
             else if (context.canceled)
             {
                 rb.linearVelocity = new Vector2(rb.linearVelocityX, rb.linearVelocityY * 0.5f);
+                jumpRemaining--;
             }
+
         }
     }
 
@@ -47,12 +55,21 @@ public class PlayerMovement : MonoBehaviour
         Gizmos.DrawCube(groundCheckPos.position, groundCheckSize);
     }
 
-    private bool isGrounded()
+    private void GroundCheck()
     {
         if (Physics2D.OverlapBox(groundCheckPos.position, groundCheckSize, 0, groundLayer))
         {
-            return true;
+            jumpRemaining = maxJumps;
         }
-        return false;
+    }
+
+    private void Gravity(){
+        if(rb.linearVelocityY < 0){
+            rb.gravityScale = gravityPower * fallSpeedMultiplier;
+            rb.linearVelocity = new Vector2(rb.linearVelocityX, Mathf.Max(rb.linearVelocityY, -maxFallSpeed));
+        }
+        else{
+            rb.gravityScale = gravityPower;
+        }
     }
 }
