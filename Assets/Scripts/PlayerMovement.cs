@@ -19,11 +19,17 @@ public class PlayerMovement : MonoBehaviour
     public float maxFallSpeed = 10f;
     public float fallSpeedMultiplier = 1.0f;
 
+    public Transform wallCheckPos;
+    public Vector2 wallCheckSize = new Vector2(0.5f, 0.5f);
+    public LayerMask wallLayer;
+    public bool isFacingRight = true;
+
     void Update()
     {
         rb.linearVelocity = new Vector2(horizontalMovement * movementSpeed, rb.linearVelocityY);
         GroundCheck();
         Gravity();
+        Flip();
     }
 
     public void Move(InputAction.CallbackContext context)
@@ -53,6 +59,9 @@ public class PlayerMovement : MonoBehaviour
     {
         Gizmos.color = Color.yellow;
         Gizmos.DrawCube(groundCheckPos.position, groundCheckSize);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawCube(wallCheckPos.position, wallCheckSize);
     }
 
     private void GroundCheck()
@@ -63,12 +72,26 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    private void Gravity(){
-        if(rb.linearVelocityY < 0){
+    private void Flip()
+    {
+        if ((isFacingRight && horizontalMovement < 0) || (!isFacingRight && horizontalMovement > 0))
+        {
+            isFacingRight = !isFacingRight;
+            Vector3 ls = transform.localScale;
+            ls.x *= -1;
+            transform.localScale = ls;
+        }
+    }
+
+    private void Gravity()
+    {
+        if (rb.linearVelocityY < 0)
+        {
             rb.gravityScale = gravityPower * fallSpeedMultiplier;
             rb.linearVelocity = new Vector2(rb.linearVelocityX, Mathf.Max(rb.linearVelocityY, -maxFallSpeed));
         }
-        else{
+        else
+        {
             rb.gravityScale = gravityPower;
         }
     }
